@@ -1,0 +1,315 @@
+---
+title: "Assignment 1"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is assignment 1 for the course *Bioinformatics Analysis and Visualisation of Medical Genomics Data*. 
+
+Completed by: Libuše Janská
+
+Date: 2024-09-25
+
+## Task 1: Literature task
+**Assigned paper:** *Single-cell analyses and host genetics highlight the role of innate immune cells in COVID-19 severity*, Edahiro et al., 2023, DOI: 10.1038/s41588-023-01375-1
+
+**Questions:**
+
+* **What is the medically relevant insight from the article?**
+  * The medically relevant insights from this paper parse out the cell types and genes that could be involved in the pathogenesis of severe COVID-19. The paper highlights the decreased presence of non-classical monocytes in disease, possibly due to lower rates of transition from classical monocytes. In severe disease, non-classical monocytes have lower expression of CXCL10 and lower regulation by IFNg, reflecting a decreased level of involvement in inter-cellular communication. Linking the single-cell data to insights from host genetics variants, the study found that there are monocyte-specific expression quantitative trate loci effects on COVID-19 risk. The study also explored COVID-19 effects on the abundance, gene expression and clonality of T and B cells, finding striking patterns particularly in plasma B cells. The impact of the study is in navigating future mechanistic research to cells that change during moderate or severe disease, which could help in identifying novel immunological and pathological mechanisms and novel treatments. In addition, since several host genetic associations to disease severity were found, insights from this paper could help identify patients more susceptible to severe disease, which can be relevant in a clinical setting.
+* **Which genomics technology/ technologies were used?**
+  * Droplet-based single-cell sequencing
+    * analyses included differential abundance analysis, gene set enrichment, differential gene expression analysis, RNA velocity estimation, TCR and BCR sequence analysis, cell-cell interaction anlysis
+  * GWAS summary statistics from a previous publication and GWAS phenotyping was done for the present samples
+    * eQTL analysis
+* **List and explain at least three questions/ hypotheses you can think of that extend the analysis presented in the paper.**
+  * Platelets show an upregulation in recieving signals from monocytes and DC in both moderate and severe disease. In moderate disease, they express ligands that can be recieved by most T or NK cell types. How is the population of platelets changed in disease? Are there any differentially expressed genes between health, disease and severe disease? Could these genes directly impact other cell types or modulate systemic response? 
+  * Plasma B cells were increased in number in both disease and severe disease. Unlike some immune cell subsets and other B cell subsets, their IFN response and antiviral signatures were increased in a severe disease setting. Are there any receptor expression specificities or transcriptional programs, that could explain why plasma B cells react differently in the same setting than other cell types and B cell subtypes?
+  * Is the eQTL present in B cells specific to plasma B cells? Can it be linked to the increase in plasma B cells in disease and severe disease?
+
+
+## Task 2: Git repositories and R Markdown
+**Git repository**: https://github.com/libjan/BioinfoAnalysis_F24
+
+
+## Task 3: R online course
+Basics of R were repeated for this task.
+
+
+## Task 4: R example dataset
+### 1-2
+
+Using and opening the internal R dataset CO2 was done using the following commands.
+```{r} 
+data(CO2)
+help(CO2)
+```
+The help function helps describe the data, which is the measured CO~2~ uptake for six plants from Quebec and six plants from Mississippi. The measurements was done at several levels of CO~2~ concentrations and half of the plants were chilled before the experiment. Using the `head(CO2)` function, we can look at how the table is organized.
+```{r}
+head(CO2)
+```
+
+### 3
+To find the average and median CO2 uptake of the plants from Quebec and Mississippi, I will use the `mean()` and `median()` functions, respectively. For this task, I am assuming that we want to find the values regardless of chilled status or ambient CO~2~ concentration. I will therefore filter the table only by the *Type* column for the desired plant origin using the `which()` function and find the desired statistics.
+```{r}
+#filtering only the rows where type equals Quebec and the uptake column
+# the resulting vector is used in the median function
+Q_med <- median(CO2[which(CO2$Type == "Quebec"),"uptake"])
+paste('The median of CO2 uptake from Quebec plants is', Q_med)
+
+#repeating for the mean
+Q_mea <- mean(CO2[which(CO2$Type == "Quebec"),"uptake"])
+paste('The mean of CO2 uptake from Quebec plants is', Q_mea)
+
+#repeating for Mississippi plants
+M_med <- median(CO2[which(CO2$Type == "Mississippi"),"uptake"])
+paste('The median of CO2 uptake from Mississipi plants is', M_med)
+
+M_mea <- mean(CO2[which(CO2$Type == "Mississippi"),"uptake"])
+paste('The mean of CO2 uptake from Mississipi plants is', M_mea)
+```
+The outputs show that the CO~2~ uptake for Mississippi plants is lower than those from Quebec.
+
+## Task 5: R functions
+
+### 5.1
+To write a function that calculates the ratio of the mean and median of a given vector, I will be using the `mean()` and `median()` functions and arithmetic operators. 
+```{r}
+meanMedianRatio <- function(vect) {
+  output <- mean(vect)/median(vect)
+  return(output)
+}
+```
+To test the function, I will use the Quebec plants uptake vector, for which I calculated the mean and median in the previous task.
+```{r}
+Q_rat <- Q_mea/Q_med
+paste("The ratio of the Quebec plants CO2 uptake is", Q_rat)
+
+#now use the function to see if the output is the same
+Q_test <- meanMedianRatio(CO2[which(CO2$Type == "Quebec"),"uptake"])
+paste("The function output is", Q_test)
+```
+### 5.2
+To write a function that calculates the mean of the vector, after removing the min and max values, I will use indexing to store all values of the vector into a trimmed vector, except for those that equal the min and max values of the vector.
+```{r}
+meanRemoveMinMax <- function(vect) {
+  vect_trim <- vect[vect != min(vect) & vect != max(vect)]
+  output <- mean(vect_trim)
+  return(output)
+}
+```
+I will test the function on a test vector.
+```{r}
+#test vector
+test <- c(-1,1:6,10)
+#means with and without min and max values
+paste("The mean of the text vector is", mean(test))
+paste("The mean of the vector with removed min and max values is", mean(c(1:6)))
+
+#function output
+paste("The output of the function is", meanRemoveMinMax(test))
+
+```
+### 5.3
+**Piping:** Piping is a way to directly feed the output of one function into the input of another function, without the need for storing intermediate outputs, which uses unnecessary space. Piping also enhances the readability of the code and makes debugging easier. It should not be used if intermediate outputs are important for another application. 
+
+### 5.4
+**Apply functions:** The `apply` family of functions is useful for applying functions to elements of a vector, matrix or list, without the need for writing loop functions. Although this does not necessarily increase the speed or efficiency of the code, it makes the code more readable and shorter, which is good practice for avoiding errors and saving time.
+
+## Task 6: Basic visualization in R
+
+### 6.1a
+Using the hist function for the *magic_guys.csv* dataset.
+```{r}
+#read in the table
+mg <- read.csv("magic_guys.csv")
+
+#plot the histogram of all species that are jedi
+p1 <- hist(mg[which(mg$species == "jedi"), "length"], 
+           col = rgb(0,0,1,0.2), main = "Jedi height", xlab = "length")
+#or sith
+p2 <- hist(mg[which(mg$species == "sith"), "length"], 
+           col = rgb(1,0,0,0.2), main = "Sith height", xlab = "length")
+
+#overlay the plots over each other to get a better visualization of their comparison
+plot(p1, col = rgb(0,0,1,0.2), main = "Jedi (blue) and Sith (red) height distribution", xlab = "length", ylim = c(0,20))
+plot(p2, col = rgb(1,0,0,0.2), add = T)
+```
+
+Using the hist function, it is not simple to overlay both groups so that they appear visually similar. GGplot may be easier for this.
+
+Now I will use the ggplot function for the same output.
+```{r}
+library(ggplot2)
+
+ggplot(mg[which(mg$species == "sith"),], aes(x = length)) + geom_histogram(aes(fill = species), color = "black", alpha = 0.2, binwidth = 15) + scale_fill_manual(values=c(rgb(1,0,0)))
+ggplot(mg[which(mg$species == "jedi"),], aes(x = length)) + geom_histogram(aes(fill = species), color = "black", alpha = 0.2, binwidth = 15) + scale_fill_manual(values=c( rgb(0,0,1)))
+
+#this time the table as is can be used with no subselection, as the fill argument can be used to specify the grouping
+#position = identity applied, otherwise bars would be stacked
+ggplot(mg, aes(x = length)) + geom_histogram(aes(fill = species), color = "black", alpha = 0.2, binwidth = 15, position = "identity") + scale_fill_manual(values=c(rgb(0,0,1), rgb(1,0,0)))
+
+
+```
+
+This plot displays the overlayed histograms in a way that is more easily interpretable. Sith size has a smaller range that is on average smaller. Jedi size has a larger range.
+
+### 6.1b
+Using boxplots to compare species length.
+```{r}
+# with boxplots of the ggplot package
+ggplot(mg, aes(x = species, y = length, fill = species)) + geom_boxplot() + scale_fill_manual(values=c(rgb(0,0,1,0.2), rgb(1,0,0,0.2)))
+
+```
+
+This comparison visualizes the distribution as well, although simplified, with less details. However, the overall message is the same. 
+
+### 6.1c
+In order to save the data, I am using the `ggplot` function. The various formats are good for different uses. The pdf format may be best for use in documents. Svg is a vector-based formats, so it is suitable for saving less complex images that need to be adjusted in further software or to be able to change the size of the image without compromising quality. Png is a raster-based format, so it is suitable for larger images without compression compromising quality.
+```{r}
+#ggsave('boxplot_t6.1.pdf')
+#ggsave('boxplot_t6.1.png')
+#install.packages('svglite')
+#ggsave('boxplot_t6.1.svg')
+```
+### 6.2a
+Visualizing the *microarray_data.tab* dataset.
+
+```{r}
+# load the tab-delimited data
+ma_data <- read.delim("microarray_data.tab", header = TRUE, sep = "\t")
+
+#see the first part of the data to make sure that the loading was correct
+ma_data[1:10,1:10]
+
+#count rows and columns
+dim(ma_data)
+```
+The matrix contains 553 rows and 1000 columns. Due to the naming of the columns, I am assuming the columns represent the genes.
+
+### 6.2b
+Counting the missing genes values.
+```{r}
+#aplying summarizing na function to each column of the matrix
+#storing in a new vector
+na_counts <- apply(ma_data,2,function(x) sum(is.na(x)))
+#using hist function to visualize the distribution
+hist(na_counts, breaks = 50)
+```
+
+Most genes are missing lower tens of values, but many also miss nearly half of the values and some miss all values.
+
+### 6.2c
+Finding genes with more than x% value. To do so for several values easily, I will create a function.
+```{r}
+#make a function, that will take as input the table in the provided format and the percentage of missing genes
+# then counts of missing values per gene will be calculated as above and converted to percentage
+# the vector of percentage of missing genes will then be searched for values equal or more to X percent
+findGenesByPercentMissing <- function(table, X) {
+  counts <- apply(table,2,function(x) sum(is.na(x)))
+  percent <- counts/dim(table)[1]*100
+  return(names(which(percent >= X)))
+}
+
+findGenesByPercentMissing(ma_data, 10)
+findGenesByPercentMissing(ma_data, 20)
+findGenesByPercentMissing(ma_data, 50)
+```
+### 6.2c
+Replace the missing values by average values for the given gene. I will define a function for this and check the output.
+```{r}
+#define function that takes a vector and calculates the mean excluidng the NA values and places them instead of the NA values
+replaceVectorNAAvg <- function(vect) {
+  vect[which(is.na(vect))] <- mean(vect, na.rm = T)
+  return(vect)
+}
+#apply the function to each column of the ma data and store as new variable
+ma_data_imput <- apply(ma_data, 2, replaceVectorNAAvg)
+
+#compare the first 5 rows of the first 10 genes of the old and new data tables
+ma_data[1:5,1:5]
+ma_data_imput[1:5,1:5]
+```
+### 6.3
+Plot CO~2~ dataset to increase understanding
+
+The idea here is to separate the measurements by type and by treatment. The CO~2~ uptake was measured at several ambient CO~2~ concentrations, therefore an appropriate visualization would be a scatterplot connected by lines to show how the uptake develops at increasing ambient concentrations.
+
+```{r}
+library(dplyr)
+library(tidyverse)
+# I am first summarizing the replicates for each condition, to be able to plot the mean and error bars. This provides a more easily readable plot.
+CO2_sum <- CO2 %>% group_by(Type, Treatment, conc) %>% summarise(mean = mean(uptake), sd = sd(uptake))
+
+#plotting using ggplot
+ggplot(CO2_sum, aes(x = conc, y = mean, color = Type, linetype = Treatment )) + geom_point() + geom_line() + 
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                 position=position_dodge(0.05)) + xlab("CO2 concentration") + ylab("CO2 uptake")
+```
+
+The results show that uptake increases with ambient CO~2~ concentration. Mississippi plant uptake less CO~2~ than Quebec plants in all conditions. Chilled plants uptake less than their nonchilled counterpart.
+
+## Task 7
+### 7.1a
+Extracting summary statistics from the chromosome dataset.
+```{r}
+#Installing the package from github.
+devtools::install_github("hirscheylab/tidybiology")
+```
+```{r}
+library(tidybiology)
+#look at the composition of the data
+chromosome
+
+#summary statistics
+chr_summary <- chromosome %>% summarize(mean_var = mean(variations), med_var = median(variations), max_var = max(variations), mean_prot = mean(protein_codinggenes), med_prot = median(protein_codinggenes), max_prot = max(protein_codinggenes), mean_mir = mean(mi_rna), med_mir = median(mi_rna), max_mir = max(mi_rna))
+
+#the ouput shows the given summary statistics
+chr_summary
+```
+The different summary statistics hint at the distribution of the measures.
+
+### 7.1b
+Visualize chromosomal size distribution.
+```{r}
+#use ggplot bar to best visualize the relative size of the chromosomes. Due to their numbering, they are mostly already ordered by size and thus ease visualization
+ggplot(data = chromosome, aes(x = id, y = length_mm)) + geom_bar(stat="identity", fill = "grey30") + ggtitle("Chromosome size") + xlab("Chromosome") + theme_minimal()
+
+#or a histogram can be use to show the distribution of chromosome lengths in terms of frequency of size
+hist(chromosome$length_mm, breaks = 5)
+```
+
+Ordering the chromosomes by id shows how them in order of relative length. The the histogram shows the distribution of lengths.
+
+### 7.1c
+Showing correlation of chromosome length and number of given gene type using scatterplot.
+```{r}
+library(patchwork)
+#plotting of the relationship between two continuous variables using scatterplot with overlayed fitted linear model
+p1 <- ggplot(data = chromosome, aes(x = length_mm, y=protein_codinggenes)) + geom_point(color = "red4") +
+   geom_smooth(method='lm',formula= y~x, color = "red4") + ggtitle("Protein-coding genes")
+p2 <- ggplot(data = chromosome, aes(x = length_mm, y=mi_rna)) + geom_point(color = "blue3") +
+   geom_smooth(method='lm',formula= y~x, color = "blue3") + ggtitle("miRNA")
+#using the wrap plot function from the patchwork package to display both graphs at once
+wrap_plots(p1,p2)
+```
+
+There is a clear correlation of both protein-coding gene number and miRNA gene number to the size of the chromosomes.
+
+### 7.1d
+Summary statistics of the proteins dataset and visualization of the relationship between mass and length.
+```{r}
+# the summarize function is used to apply the statistic over the given column
+prot_summary <- proteins %>% summarize(mean_mass = mean(mass), med_mass = median(mass), max_var = max(mass), mean_length = mean(length), med_length = median(length), max_length = max(length))
+#display of results
+prot_summary
+
+#plotting of the relationship between two continuous variables using scatterplot with overlayed fitted linear model
+#scale was made to be log2 because of the distribution and range of values
+ggplot(data = proteins, aes(x = length, y=mass)) + geom_point(color = "royalblue3", alpha = 0.15) +
+       geom_smooth(method='lm',formula= y~x, color = "gray20") + ggtitle("Protein length and mass") + scale_y_continuous(trans="log2",labels = scales::math_format(2^.x, format = log2)) + scale_x_continuous(trans = "log2",labels = scales::math_format(2^.x, format = log2)) + theme_light()
+```
+
+Protein length and mass correlate.
+
